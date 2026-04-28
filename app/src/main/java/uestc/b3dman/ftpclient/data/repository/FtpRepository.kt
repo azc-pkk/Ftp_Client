@@ -42,7 +42,7 @@ class FtpRepository @Inject constructor(
 
     // --- 模拟远程 FTP 操作 ---
     suspend fun login(account: FtpAccount): Result<Boolean> {
-        return Result.success(ftpManager.connect(account))
+        return if (ftpManager.connect(account)) Result.success(true) else Result.failure(Exception("Login failed"))
     }
 
     suspend fun getFiles(path: String): List<FtpFileItem> {

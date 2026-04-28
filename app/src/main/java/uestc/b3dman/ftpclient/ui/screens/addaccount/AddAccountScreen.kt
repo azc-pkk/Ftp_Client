@@ -7,8 +7,12 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBackIosNew
 import androidx.compose.material3.*
@@ -19,6 +23,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
@@ -48,9 +53,12 @@ fun AddAccountScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .imePadding()
+            .verticalScroll(rememberScrollState())
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        Spacer(modifier = Modifier.height(10.dp))
         // 1. 顶部返回按钮
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -113,10 +121,10 @@ fun AddAccountScreen(
             CustomInputField(value = viewModel.ipAndPort, onValueChange = {viewModel.ipAndPort = it}, placeholder = "服务端 IP ( 端口默认为21 )")
             CustomInputField(value = viewModel.username, onValueChange = { viewModel.username = it }, placeholder = "用户名 ( 匿名登录不填 )")
             CustomInputField(value = viewModel.password, onValueChange = { viewModel.password = it }, placeholder = "密码 ( 可为空 )")
-            CustomInputField(value = viewModel.alias, onValueChange = { viewModel.alias = it }, placeholder = "服务器备注 ( 可不填 )")
+            CustomInputField(value = viewModel.alias, onValueChange = { viewModel.alias = it }, placeholder = "服务器备注 ( 可不填 )", imeAction = ImeAction.Done)
         }
 
-        Spacer(modifier = Modifier.weight(1f))
+        Spacer(modifier = Modifier.height(30.dp))
 
         // 5. 确认按钮
         Button(
@@ -140,7 +148,12 @@ fun AddAccountScreen(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CustomInputField(value: String, onValueChange: (String) -> Unit, placeholder: String) {
+fun CustomInputField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    placeholder: String,
+    imeAction: ImeAction = ImeAction.Next
+) {
     TextField(
         value = value,
         onValueChange = onValueChange,
@@ -148,6 +161,9 @@ fun CustomInputField(value: String, onValueChange: (String) -> Unit, placeholder
         modifier = Modifier
             .fillMaxWidth(0.85f)
             .height(60.dp),
+        // 设置键盘选项
+        keyboardOptions = KeyboardOptions.Default.copy(imeAction = imeAction),
+        keyboardActions = KeyboardActions.Default,
         colors = TextFieldDefaults.colors(
             // 设置容器背景颜色
             focusedContainerColor = Color(0xFFE0E0E0),

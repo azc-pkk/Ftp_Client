@@ -44,6 +44,9 @@ fun LoginScreen(
     // 删除账号
     var accountToDelete by remember { mutableStateOf<FtpAccount?>(null) }
 
+    // 登录失败
+    var loginFiled by remember { mutableStateOf(false) }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -75,7 +78,7 @@ fun LoginScreen(
                     viewModel.performLogin(
                         recentAccount,
                         onSuccess = { onNavigateToBrowser() },
-                        onFailed = { /* TODO: 登录失败处理 */ }
+                        onFailed = { loginFiled = true }
                     )
                 },
             )
@@ -110,6 +113,7 @@ fun LoginScreen(
                         showSheet = false // 关闭弹窗
                     },
                     onEditClick = { account ->
+                        showSheet = false
                         onNavigateToEditAccount(account.id)
                     },
                     onDeleteClick = { account ->
@@ -136,6 +140,17 @@ fun LoginScreen(
                 },
                 dismissButton = {
                     TextButton(onClick = { accountToDelete = null }) { Text("取消") }
+                }
+            )
+        }
+
+        if (loginFiled) {
+            AlertDialog(
+                onDismissRequest = { loginFiled = false },
+                title = { Text("登录失败") },
+                text = { Text("登录失败，请检查账号信息") },
+                confirmButton = {
+                    TextButton(onClick = { loginFiled = false }) { Text("确定") }
                 }
             )
         }
@@ -211,9 +226,11 @@ fun AccountItem(
             }
         }
         Spacer(modifier = Modifier.width(16.dp))
-        Column {
-            Text(text = account.alias, fontSize = 16.sp, fontWeight = FontWeight.Medium)
-            Text(text = "${account.userName}@${account.ip}", fontSize = 14.sp, color = Color.Gray)
+        Column(
+            modifier = Modifier.weight(1f)
+        ) {
+            Text(text = account.alias, fontSize = 16.sp, fontWeight = FontWeight.Medium, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
+            Text(text = "${account.userName}@${account.ip}", fontSize = 14.sp, color = Color.Gray, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
         }
         // 右侧编辑和删除按钮
         Row {
@@ -261,10 +278,6 @@ fun LoginContentWithHistory(
 ) {
     val userAlias = account.userName + '@' + account.alias
     val ipPort = account.ip + ':' + account.port.toString()
-    // 状态 1: 是否处于密码输入模式
-    var isPasswordMode by remember { mutableStateOf(false) }
-    // 状态 2: 密码输入框的内容
-    var password by remember { mutableStateOf("") }
 
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         // --- 用户信息行 (保持不变) ---
@@ -298,60 +311,20 @@ fun LoginContentWithHistory(
             }
         }
 
-        Spacer(modifier = Modifier.height(40.dp))
+        Spacer(modifier = Modifier.height(50.dp))
 
-        // --- 动态切换区域 ---
-        if (!isPasswordMode) {
-            // 模式 A: 初始状态 (一键登录)
-            Button(
-                onClick = {
-                    onLogin()
-                },
-                modifier = Modifier
-                    .width(240.dp)
-                    .height(56.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF38B4FF)),
-                shape = RoundedCornerShape(8.dp)
-            ) {
-                Text(text = "一键登录", color = Color.White, fontSize = 18.sp)
-            }
 
-            Spacer(modifier = Modifier.height(16.dp))
-
-            TextButton(onClick = { isPasswordMode = true }) {
-                Text(text = "密码登录", color = Color.Black, fontSize = 16.sp)
-            }
-        } else {
-            // 模式 B: 密码输入状态
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                // 密码输入框 (复用之前定义的 CustomInputField 样式)
-                // 这里我们稍微修改一下，增加 passwordVisualTransformation 隐藏明文
-                PasswordInputField(
-                    value = password,
-                    onValueChange = { password = it },
-                    placeholder = "请输入密码"
-                )
-
-                // 确定按钮
-                Button(
-                    onClick = { onLogin() },
-                    modifier = Modifier
-                        .width(240.dp)
-                        .height(56.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF38B4FF)),
-                    shape = RoundedCornerShape(8.dp)
-                ) {
-                    Text(text = "确定", color = Color.White, fontSize = 18.sp)
-                }
-
-                // 取消按钮（可选，方便用户切回一键登录）
-                TextButton(onClick = { isPasswordMode = false }) {
-                    Text(text = "取消", color = Color.Gray, fontSize = 14.sp)
-                }
-            }
+        Button(
+            onClick = {
+                onLogin()
+            },
+            modifier = Modifier
+                .width(240.dp)
+                .height(56.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF38B4FF)),
+            shape = RoundedCornerShape(8.dp)
+        ) {
+            Text(text = "一键登录", color = Color.White, fontSize = 18.sp)
         }
     }
 }

@@ -34,6 +34,10 @@ class LoginViewModel @Inject constructor(
                 withContext(Dispatchers.Main) {
                     onSuccess()
                 }
+            } else {
+                withContext(Dispatchers.Main) {
+                    onFailed()
+                }
             }
         }
     }

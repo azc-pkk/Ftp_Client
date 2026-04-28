@@ -60,9 +60,9 @@ class AddAccountViewModel @Inject constructor(
                 id = if (isEditMode) accountId else 0,
                 ip = ipAndPort.split(":", limit = 2)[0],
                 port = ipAndPort.split(":", limit = 2).getOrNull(1)?.toIntOrNull() ?: 21,
-                userName = username,
+                userName = username.ifBlank { "anonymous" },
                 password = password,
-                alias = alias,
+                alias = alias.ifBlank { ipAndPort.split(":", limit = 2)[0] },
                 avatarPath = avatarPath,
                 lastLoginTime = System.currentTimeMillis()
             )

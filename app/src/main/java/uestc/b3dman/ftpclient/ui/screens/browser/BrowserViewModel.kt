@@ -40,7 +40,7 @@ class BrowserViewModel @Inject constructor(
 
     // 路径改变自动调用 getFiles
     init {
-        viewModelScope.launch() {
+        viewModelScope.launch {
             currentPathString.collect { path ->
                 getFiles()
             }

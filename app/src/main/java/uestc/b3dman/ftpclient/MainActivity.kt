@@ -9,9 +9,11 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import dagger.hilt.android.AndroidEntryPoint
 import uestc.b3dman.ftpclient.ui.screens.addaccount.AddAccountScreen
 import uestc.b3dman.ftpclient.ui.screens.browser.BrowserScreen
@@ -48,13 +50,26 @@ fun AppNavigation() {
                 },
                 onNavigateToAddAccount = {
                     navController.navigate("add_account")
+                },
+                onNavigateToEditAccount = { accountId ->
+                    navController.navigate("add_account?accountId=$accountId")
                 }
             )
        }
-        composable("add_account") {
-            AddAccountScreen(onBack = {
-                navController.popBackStack()
-            })
+        composable(
+            "add_account?accountId={accountId}",
+            arguments = listOf(
+                navArgument("accountId") {
+                    type = NavType.IntType
+                    defaultValue = -1 // -1 表示新建账号，其他值表示编辑对应 ID 的账号
+                }
+            )
+        ) { backStackEntry ->
+            val accountId = backStackEntry.arguments?.getInt("accountId") ?: -1
+            AddAccountScreen(
+                accountId = accountId,
+                onBack = { navController.popBackStack() }
+            )
         }
         composable("browser") {
             BrowserScreen(onExit = {

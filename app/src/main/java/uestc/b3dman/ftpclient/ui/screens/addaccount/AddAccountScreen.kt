@@ -23,24 +23,24 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import uestc.b3dman.ftpclient.data.model.FtpAccount
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddAccountScreen(
+    accountId: Int,
     onBack: () -> Unit,
     viewModel: AddAccountViewModel = hiltViewModel()
 ) {
-    // 定义各个输入框的状态
-    var ip by remember { mutableStateOf("") }
-    var username by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
-    var alias by remember { mutableStateOf("") }
-    var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
     val photoPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickVisualMedia()
     ) { uri ->
         // 当用户选完图片后，回调会返回图片的 URI
-        selectedImageUri = uri
+        viewModel.avatarUri = uri
+    }
+
+    LaunchedEffect(accountId) {
+        viewModel.loadAccount(accountId)
     }
 
     val fieldColor = Color(0xFFE0E0E0) // 浅灰色输入框背景
@@ -89,10 +89,10 @@ fun AddAccountScreen(
                 .clip(CircleShape),
             contentAlignment = Alignment.Center
         ) {
-            if (selectedImageUri != null) {
+            if (viewModel.avatarUri != null) {
                 // 使用 Coil 加载选中的图片
                 AsyncImage(
-                    model = selectedImageUri,
+                    model = viewModel.avatarUri,
                     contentDescription = "Avatar",
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.Crop // 填满圆圈
@@ -110,10 +110,10 @@ fun AddAccountScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            CustomInputField(value = ip, onValueChange = { ip = it }, placeholder = "服务端 IP ( 端口默认为21 )")
-            CustomInputField(value = username, onValueChange = { username = it }, placeholder = "用户名 ( 匿名登录不填 )")
-            CustomInputField(value = password, onValueChange = { password = it }, placeholder = "密码 ( 可为空 )")
-            CustomInputField(value = alias, onValueChange = { alias = it }, placeholder = "服务器备注 ( 可不填 )")
+            CustomInputField(value = viewModel.ipAndPort, onValueChange = {viewModel.ipAndPort = it}, placeholder = "服务端 IP ( 端口默认为21 )")
+            CustomInputField(value = viewModel.username, onValueChange = { viewModel.username = it }, placeholder = "用户名 ( 匿名登录不填 )")
+            CustomInputField(value = viewModel.password, onValueChange = { viewModel.password = it }, placeholder = "密码 ( 可为空 )")
+            CustomInputField(value = viewModel.alias, onValueChange = { viewModel.alias = it }, placeholder = "服务器备注 ( 可不填 )")
         }
 
         Spacer(modifier = Modifier.weight(1f))
@@ -121,16 +121,8 @@ fun AddAccountScreen(
         // 5. 确认按钮
         Button(
             onClick = {
-                val host = ip.split(':', limit = 2)[0]
-                val port = ip.split(':', limit = 2).getOrNull(1)?.toIntOrNull() ?: 21
                 viewModel.addAccount(
-                    ip = host,
-                    port = port,
-                    userName = username.ifBlank { "anonymous" },
-                    password = password,
-                    alias = alias.ifBlank { ip },
-                    avatarUri = selectedImageUri,
-                    onSuccess = onBack,
+                    onSuccess = onBack
                 )
             },
             modifier = Modifier

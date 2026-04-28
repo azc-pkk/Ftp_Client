@@ -5,6 +5,9 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -28,17 +31,18 @@ val FtpBlue = Color(56, 182, 255)
 fun LoginScreen(
     onNavigateToBrowser: () -> Unit,
     onNavigateToAddAccount: () -> Unit,
+    onNavigateToEditAccount: (Int) -> Unit,
     viewModel: LoginViewModel = hiltViewModel()
 ) {
-//    // TODO: 这里的 hasHistory 只是为了演示两种 UI 状态，实际应该根据用户数据来决定
-//    // 模拟是否有历史记录的状态，点击顶部的 "Easy FTP" 可以切换状态观察 UI
-//    var hasHistory by remember { mutableStateOf(false) }
     val accounts by viewModel.accounts.collectAsState(initial = emptyList())
     val isLoggingIn by viewModel.isLoggingIn.collectAsState()
 
     // 控制底部弹窗显示
     var showSheet by remember { mutableStateOf(false) }
     val sheetState = rememberModalBottomSheetState()
+
+    // 删除账号
+    var accountToDelete by remember { mutableStateOf<FtpAccount?>(null) }
 
     Column(
         modifier = Modifier
@@ -104,9 +108,36 @@ fun LoginScreen(
                     onAccountSelected = { account ->
                         viewModel.switchAccount(account) // 更新 ViewModel 状态
                         showSheet = false // 关闭弹窗
+                    },
+                    onEditClick = { account ->
+                        onNavigateToEditAccount(account.id)
+                    },
+                    onDeleteClick = { account ->
+                        accountToDelete = account
+                        showSheet = false
                     }
                 )
             }
+        }
+
+        // 删除弹窗
+        if (accountToDelete != null) {
+            AlertDialog(
+                onDismissRequest = { accountToDelete = null },
+                title = { Text("确认删除") },
+                text = { Text("确定要删除账号 ${accountToDelete?.userName + "@" + accountToDelete?.alias} 吗？") },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            viewModel.deleteAccount(accountToDelete!!)
+                            accountToDelete = null
+                        }
+                    ) { Text("删除", color = Color.Red) }
+                },
+                dismissButton = {
+                    TextButton(onClick = { accountToDelete = null }) { Text("取消") }
+                }
+            )
         }
     }
 }
@@ -114,7 +145,9 @@ fun LoginScreen(
 @Composable
 fun AccountListSheetContent(
     accounts: List<FtpAccount>,
-    onAccountSelected: (FtpAccount) -> Unit
+    onAccountSelected: (FtpAccount) -> Unit,
+    onEditClick: (FtpAccount) -> Unit,
+    onDeleteClick: (FtpAccount) -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -132,7 +165,12 @@ fun AccountListSheetContent(
         androidx.compose.foundation.lazy.LazyColumn {
             items(accounts.size) { index ->
                 val account = accounts[index]
-                AccountItem(account = account, onClick = { onAccountSelected(account) })
+                AccountItem(
+                    account = account,
+                    onClick = { onAccountSelected(account) },
+                    onEditClick = { onEditClick(account) },
+                    onDeleteClick = { onDeleteClick(account) }
+                )
                 if (index < accounts.size - 1) {
                     HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), thickness = 0.5.dp)
                 }
@@ -142,7 +180,12 @@ fun AccountListSheetContent(
 }
 
 @Composable
-fun AccountItem(account: FtpAccount, onClick: () -> Unit) {
+fun AccountItem(
+    account: FtpAccount,
+    onClick: () -> Unit,
+    onEditClick: () -> Unit,
+    onDeleteClick: () -> Unit
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -150,7 +193,7 @@ fun AccountItem(account: FtpAccount, onClick: () -> Unit) {
             .padding(16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // 账号头像占位
+        // 头像
         Box(
             modifier = Modifier.size(48.dp).background(Color.LightGray, CircleShape).clip(CircleShape),
             contentAlignment = Alignment.Center
@@ -163,7 +206,7 @@ fun AccountItem(account: FtpAccount, onClick: () -> Unit) {
                     contentScale = ContentScale.Crop
                 )
             } else {
-                // 默认显示首字母或占位图
+                // TODO:显示默认头像
                 Text(account.alias.take(1))
             }
         }
@@ -171,6 +214,15 @@ fun AccountItem(account: FtpAccount, onClick: () -> Unit) {
         Column {
             Text(text = account.alias, fontSize = 16.sp, fontWeight = FontWeight.Medium)
             Text(text = "${account.userName}@${account.ip}", fontSize = 14.sp, color = Color.Gray)
+        }
+        // 右侧编辑和删除按钮
+        Row {
+            IconButton(onClick = onEditClick) {
+                Icon(Icons.Default.Edit, contentDescription = "编辑", tint = Color.Gray)
+            }
+            IconButton(onClick = onDeleteClick) {
+                Icon(Icons.Default.Delete, contentDescription = "删除", tint = Color.Red.copy(alpha = 0.8f))
+            }
         }
     }
 }

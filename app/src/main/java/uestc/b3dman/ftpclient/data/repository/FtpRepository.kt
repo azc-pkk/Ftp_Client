@@ -28,6 +28,18 @@ class FtpRepository @Inject constructor(
         accountDao.updateAccount(updatedAccount)
     }
 
+    suspend fun deleteAccount(account: FtpAccount) {
+        accountDao.deleteAccount(account)
+    }
+
+    suspend fun updateAccount(account: FtpAccount) {
+        accountDao.updateAccount(account)
+    }
+
+    suspend fun getAccountById(id: Int): FtpAccount? {
+        return accountDao.getAccountById(id)
+    }
+
     // --- 模拟远程 FTP 操作 ---
     suspend fun login(account: FtpAccount): Result<Boolean> {
         return Result.success(ftpManager.connect(account))

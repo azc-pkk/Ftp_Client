@@ -17,4 +17,7 @@ interface FtpAccountDao {
 
     @Delete
     suspend fun deleteAccount(account: FtpAccount)
+
+    @Query("SELECT * FROM ftp_accounts WHERE id = :id LIMIT 1")
+    suspend fun getAccountById(id: Int): FtpAccount?
 }

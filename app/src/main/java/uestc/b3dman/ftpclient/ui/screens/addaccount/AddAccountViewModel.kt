@@ -2,6 +2,10 @@ package uestc.b3dman.ftpclient.ui.screens.addaccount
 
 import android.content.Context
 import android.net.Uri
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import androidx.lifecycle.viewModelScope
@@ -13,6 +17,7 @@ import kotlinx.coroutines.withContext
 import uestc.b3dman.ftpclient.data.model.FtpAccount
 import uestc.b3dman.ftpclient.data.repository.FtpRepository
 import uestc.b3dman.ftpclient.utils.FileUtils
+import androidx.core.net.toUri
 
 @HiltViewModel
 class AddAccountViewModel @Inject constructor(
@@ -20,7 +25,31 @@ class AddAccountViewModel @Inject constructor(
     @param:ApplicationContext private val context: Context
 ) : ViewModel() {
 
-    fun addAccount(ip: String, port: Int, userName: String, password: String, alias: String, avatarUri: Uri?, onSuccess: () -> Unit) {
+    var ipAndPort by mutableStateOf("")
+    var username by mutableStateOf("")
+    var password by mutableStateOf("")
+    var alias by mutableStateOf("")
+    var avatarUri by mutableStateOf<Uri?>(null)
+
+    private var isEditMode = false
+    private var accountId = -1
+
+    fun loadAccount(id: Int) {
+        if (id == -1) return
+        isEditMode = true
+        accountId = id
+        viewModelScope.launch {
+            repository.getAccountById(id)?.let { account ->
+                ipAndPort = if (account.port == 21) account.ip else "${account.ip}:${account.port}"
+                username = account.userName
+                password = account.password
+                alias = account.alias
+                avatarUri = account.avatarPath?.toUri()
+            }
+        }
+    }
+
+    fun addAccount(onSuccess: () -> Unit) {
         // TODO: 各字段校验
         viewModelScope.launch(Dispatchers.IO) {
             val avatarPath = avatarUri?.let { uri ->
@@ -28,15 +57,17 @@ class AddAccountViewModel @Inject constructor(
                 FileUtils.saveUriToInternalStorage(context, uri)
             }
             val newAccount = FtpAccount(
-                ip = ip,
-                port = port,
-                userName = userName,
+                id = if (isEditMode) accountId else 0,
+                ip = ipAndPort.split(":", limit = 2)[0],
+                port = ipAndPort.split(":", limit = 2).getOrNull(1)?.toIntOrNull() ?: 21,
+                userName = username,
                 password = password,
                 alias = alias,
                 avatarPath = avatarPath,
                 lastLoginTime = System.currentTimeMillis()
             )
-            repository.saveAccount(newAccount)
+            if (isEditMode) repository.updateAccount(newAccount)
+            else repository.saveAccount(newAccount)
             // 切换回主线程调用 onSuccess
             withContext(Dispatchers.Main) {
                 onSuccess()

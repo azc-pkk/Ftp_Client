@@ -43,4 +43,10 @@ class LoginViewModel @Inject constructor(
             repository.updateLastLoginTime(account)
         }
     }
+
+    fun deleteAccount(account: FtpAccount) {
+        viewModelScope.launch {
+            repository.deleteAccount(account)
+        }
+    }
 }

@@ -15,6 +15,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.automirrored.filled.ArrowBackIos
 import androidx.compose.runtime.*
@@ -39,6 +41,13 @@ fun BrowserScreen(
     var showSheet by remember { mutableStateOf(false) }
     var selectedFile by remember { mutableStateOf<FtpFileUiState?>(null) }
     val sheetState = rememberModalBottomSheetState()
+
+    // 文件选择器
+    val pickFileLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent(),
+    ) { uri ->
+        uri?.let { viewModel.uploadFile(it) }
+    }
 
     LaunchedEffect(accountId) {
         viewModel.accountId = accountId
@@ -70,7 +79,9 @@ fun BrowserScreen(
         }
     ) { padding ->
         Column(modifier = Modifier.padding(padding).fillMaxSize().background(Color.White)) {
-            ControlBar()
+            ControlBar(
+                onUploadClick = { pickFileLauncher.launch("*/*") }
+            )
 
             LazyColumn(modifier = Modifier.fillMaxSize()) {
                 items(fileList) { file ->
@@ -152,7 +163,6 @@ fun ActionItem(icon: ImageVector, label: String, color: Color = Color.Black, onC
     }
 }
 
-// 修改后的 FileListItem 接收点击回调
 @Composable
 fun FileListItem(file: FtpFileUiState, onClick: () -> Unit) {
     Row(
@@ -183,7 +193,9 @@ fun FileListItem(file: FtpFileUiState, onClick: () -> Unit) {
 }
 
 @Composable
-fun ControlBar() {
+fun ControlBar(
+    onUploadClick: () -> Unit,
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -208,7 +220,7 @@ fun ControlBar() {
         // --- 右侧：快捷操作按钮 ---
         Row(verticalAlignment = Alignment.CenterVertically) {
             // 上传按钮
-            IconButton(onClick = { /* 触发文件选择器 */ }) {
+            IconButton(onClick = { onUploadClick() }) {
                 Icon(
                     imageVector = Icons.Default.FileUpload,
                     contentDescription = "上传文件",

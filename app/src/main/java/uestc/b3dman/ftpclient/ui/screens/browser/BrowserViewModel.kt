@@ -1,5 +1,6 @@
 package uestc.b3dman.ftpclient.ui.screens.browser
 
+import android.net.Uri
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -59,6 +60,12 @@ class BrowserViewModel @Inject constructor(
         viewModelScope.launch(Dispatchers.IO) {
             _files.value = repository.getFiles(currentPathString.value)
             Log.d("BrowserViewModel", "getFiles: getting files for path ${currentPathString.value}, got ${_files.value.size} items")
+        }
+    }
+
+    fun uploadFile(uri: Uri) {
+        viewModelScope.launch(Dispatchers.IO) {
+            repository.uploadFile(currentPathString.value, uri)
         }
     }
 

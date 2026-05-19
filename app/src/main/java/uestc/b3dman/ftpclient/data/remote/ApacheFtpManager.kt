@@ -3,6 +3,7 @@ package uestc.b3dman.ftpclient.data.remote
 import org.apache.commons.net.ftp.FTPClient
 import org.apache.commons.net.ftp.FTPFile
 import uestc.b3dman.ftpclient.data.model.FtpFileItem
+import java.io.InputStream
 import java.io.OutputStream
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -55,6 +56,18 @@ class ApacheFtpManager @Inject constructor() : FtpManager{
         if (outputStream == null) return false
         return try {
             ftpClient.retrieveFile(remotePath, outputStream)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            false
+        }
+    }
+
+    override fun uploadFile(remotePath: String, inputStream: InputStream?): Boolean {
+        if (inputStream == null) return false
+        return try {
+            val success = ftpClient.storeFile(remotePath, inputStream)
+            inputStream.close()
+            success
         } catch (e: Exception) {
             e.printStackTrace()
             false

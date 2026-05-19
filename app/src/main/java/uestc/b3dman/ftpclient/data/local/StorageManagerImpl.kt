@@ -3,9 +3,11 @@ package uestc.b3dman.ftpclient.data.local
 import android.content.Context
 import android.net.Uri
 import android.os.Environment
+import android.provider.OpenableColumns
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.File
 import java.io.FileOutputStream
+import java.io.InputStream
 import java.io.OutputStream
 import java.util.UUID
 import javax.inject.Inject
@@ -56,5 +58,33 @@ class StorageManagerImpl @Inject constructor(
             e.printStackTrace()
             null
         }
+    }
+
+    override fun getInputStream(uri: Uri): InputStream? {
+        return try {
+            context.contentResolver.openInputStream(uri)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
+    }
+
+    override fun getFileName(uri: Uri): String? {
+        if (uri.scheme == "file") {
+            return uri.lastPathSegment
+        }
+        var fileName: String? = null
+        val contentResolver = context.contentResolver
+        val cursor = contentResolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)
+        cursor?.use {
+            if (it.moveToFirst()) {
+                val index = it.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+                if (index >= 0) {
+                    fileName = it.getString(index)
+                }
+            }
+        }
+        cursor?.close()
+        return fileName
     }
 }

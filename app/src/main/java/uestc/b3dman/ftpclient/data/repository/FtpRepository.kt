@@ -47,12 +47,12 @@ class FtpRepository @Inject constructor(
     }
 
     // --- 远程 FTP 操作 ---
-    suspend fun login(account: FtpAccount): Result<Boolean> {
+    fun login(account: FtpAccount): Result<Boolean> {
         val result = ftpManager.connect(account.ip, account.port, account.userName, account.password)
         return if (result) Result.success(true) else Result.failure(Exception("Login failed"))
     }
 
-    suspend fun getFiles(path: String): List<FtpFileItem> {
+    fun getFiles(path: String): List<FtpFileItem> {
         return ftpManager.listFiles(path)
     }
 
@@ -70,7 +70,14 @@ class FtpRepository @Inject constructor(
         return if(result) Result.success(true) else Result.failure(Exception("Download failed"))
     }
 
-    suspend fun logout() {
+    suspend fun uploadFile(remotePath: String, localUri: Uri): Result<Boolean> {
+        val fileName = storage.getFileName(localUri)
+            ?: return Result.failure(Exception("Get file name failed"))
+        val result = ftpManager.uploadFile(remotePath + File.separator + fileName, storage.getInputStream(localUri))
+        return if(result) Result.success(true) else Result.failure(Exception("Upload failed"))
+    }
+
+    fun logout() {
         ftpManager.disconnect()
     }
 
